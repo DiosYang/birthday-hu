@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#251d2b"><meta name="description" content="送给思佳的27岁生日礼物：一间有黑猫、冬樱和小小心意的星光小屋。">
+  <title>思佳，27岁生日快乐</title>
+  <link rel="stylesheet" href="style.css?v=2967ee8d52"><link rel="stylesheet" href="travel.css?v=bef26ae699"><link rel="stylesheet" href="sky.css?v=815b4f6ca5"><link rel="stylesheet" href="extras.css?v=af94bd24da">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/controls/OrbitControls.js":"./vendor/OrbitControls.js"}}</script>
+</head>
+<body>
+  <main>
+    <header><a class="brand" href="#" aria-label="回到小屋首页"><span class="star">✧</span> SIJIA’S LITTLE WORLD</a><button id="sound" class="quiet" aria-pressed="false">♫ <span>声音关</span></button></header>
+    <section class="intro"><div class="eyebrow">CHAPTER 27 · PLACES & LITTLE WISHES</div><h1>思佳，<br>二十七岁生日快乐<span class="dot">。</span></h1><p>把走过的路，收进这间小屋。<br>从上海的街角，到南半球的海风。</p><div class="dedication">TO <span id="recipient">思佳</span> <span class="dash">——</span> HAPPY 27TH BIRTHDAY</div></section>
+    <section class="room-wrap" aria-label="可以拖动旋转的生日小屋"><div id="room"></div><button id="enter-room" class="enter-room">走进小屋</button><div id="loading">正在为你点亮小屋 <span>✧</span></div><button id="reset" class="view-reset" title="恢复初始视角" aria-label="恢复初始视角">↺</button><div id="hint" role="status">拖动转一转 · 点击小物件，发现惊喜</div></section>
+    <section class="discover"><div class="discover-heading"><span>藏在房间里的小心意</span><span id="progress">0 / 11 已发现</span></div><nav aria-label="探索小屋里的十一份惊喜"><button data-item="tv">小电视</button><button data-item="camera">宝丽莱 I-2</button><button data-item="rabbit">捉住小白兔</button><button data-item="window">推开窗户</button><button data-item="map">旅行地图</button><button data-item="book">① 二十七岁的信</button><button data-item="moon">② 月亮来信</button><button data-item="cat">③ 摸摸小猫</button><button data-item="record">④ 留声机</button><button data-item="flowers">⑤ 一枝冬樱</button><button data-item="gift" class="gift-chip">⑥ 生日礼物 <span>✧</span></button></nav></section>
+    <footer><span>愿每个平凡的日子，都有微小的光。</span><span>MADE WITH A LITTLE LOVE <i>♡</i></span></footer>
+  </main>
+  <section id="walk-ui" hidden aria-label="第一人称探索操作">
+    <div class="walk-top"><div><strong>思佳的生日小屋</strong><span>慢慢走，发现留给你的心意</span></div><button id="exit-room">回到俯瞰</button></div>
+    <div class="crosshair" aria-hidden="true"></div>
+    <button id="interact" disabled>靠近小物件，发现惊喜</button>
+    <div class="walk-help">WASD / 方向键移动 · 拖动环顾 · F 互动 · Esc 返回</div>
+    <div class="walk-pad" aria-label="移动方向"><button data-move="forward" aria-label="向前走">前</button><button data-move="left" aria-label="向左走">左</button><button data-move="back" aria-label="向后走">后</button><button data-move="right" aria-label="向右走">右</button></div>
+    <div class="touch-help">左下移动 · 滑动环顾</div>
+  </section>
+  <canvas id="celebration" aria-hidden="true"></canvas>
+  <dialog id="letter"><button id="close" class="modal-close" aria-label="关闭">×</button><div class="letter-star">✧</div><div id="letter-label" class="eyebrow"></div><h2 id="letter-title"></h2><div id="letter-body"></div><div class="letter-bottom"><span id="letter-sign"></span><button id="next" class="primary" hidden>翻到下一页 →</button></div></dialog>
+  <dialog id="travel-journal" aria-labelledby="travel-heading">
+    <header class="travel-header"><div><div class="travel-overline">SIJIA · 27 / THE PLACES WE KEEP</div><h2 id="travel-heading">把世界，慢慢走成回忆。</h2></div><button id="travel-close" aria-label="合上旅行相册">×</button></header>
+    <div class="travel-layout">
+      <aside class="travel-atlas"><div class="atlas-heading"><span>我们的旅行地图</span><span id="travel-progress">1 / 4 站已点亮</span></div><div id="travel-route"></div><nav id="travel-stops" aria-label="依次打开旅行的四站"></nav><p class="atlas-note">走过的路会亮起来，<br>下一页，世界再大一点。</p></aside>
+      <article class="travel-album" aria-live="polite" aria-atomic="true"><div class="album-meta"><span id="travel-english"></span><span id="travel-count"></span></div><div class="place-row"><h3 id="travel-place"></h3><span id="travel-stamp"></span></div><div class="postcard-wrap"><div id="station-decor" aria-label="这一站的小装饰"></div><div class="photo-paper"><div id="travel-photo"></div><div class="photo-foot"><p id="travel-caption"></p><span id="travel-photo-count"></span></div></div></div><div id="travel-thumbs" aria-label="这一站的照片"></div><h4 id="travel-title"></h4><p id="travel-description"></p>
+      <div id="travel-finale" hidden><div class="travel-overline">THE NEXT CHAPTER IS YOURS</div><h4 id="travel-finale-title"></h4><p>愿你始终有出发的勇气，也有停下来欣赏的心情。<br>世界很大，你的生活也可以有很多种模样。<br><br>27岁，继续去喜欢，去探索，去成为自己。<br>而这一路的美好，都替你悄悄收藏。</p><span>这一程，未完待续。</span></div>
+      <footer class="album-controls"><button id="travel-prev">回到上一站</button><button id="travel-next">下一站 · 景德镇</button></footer></article>
+    </div>
+  </dialog>
+  <dialog id="photo-viewer" aria-label="旅行照片大图"><button id="viewer-close" aria-label="关闭照片大图">×</button><img id="viewer-image" alt=""><div class="viewer-controls"><button id="viewer-prev">上一张</button><p id="viewer-caption"></p><button id="viewer-next">下一张</button></div></dialog>
+  <dialog id="night-sky" aria-label="窗外的星空烟花"><canvas id="sky-canvas" aria-hidden="true"></canvas><div class="sky-top"><button id="sky-close">回到小屋</button><span>A SKY FULL OF WISHES · SIJIA 27</span><button id="sky-pause" aria-pressed="false">暂停烟花</button></div><div id="sky-greeting" class="sky-greeting" hidden><p>MAKE A LITTLE WISH</p><h2>思佳，27岁生日快乐。</h2><span>下一程，会有更好的风景。</span></div><div class="sky-bottom"><p id="sky-subtitle" role="status" aria-live="polite"></p><button id="sky-replay" class="sky-replay">再看一场</button></div></dialog>
+  <dialog id="tv-viewer" aria-labelledby="tv-title"><button id="tv-close" class="toy-close" aria-label="关闭小电视">×</button><h2 id="tv-title">小兔子的出发日</h2><canvas id="tv-canvas" width="640" height="400" aria-label="一只小白兔在草地上跳跃，遇见小羊和生日气球的无声动画"></canvas><div class="tv-controls"><span>给今天的你，一小段慢悠悠的时光。</span><button id="tv-pause" class="toy-action" aria-pressed="false">暂停动画</button></div></dialog>
+  <dialog id="polaroid-viewer" aria-labelledby="polaroid-title"><button id="polaroid-close" class="toy-close" aria-label="收好拍立得照片">×</button><h2 id="polaroid-title">咔嚓，把这一刻留下。</h2><div class="instant-printer" aria-hidden="true"><span class="printer-label">Polaroid</span><span class="printer-model">I-2</span><i class="printer-dot"></i></div><div class="print-pocket"><figure id="polaroid-paper" class="polaroid-paper"><img src="./assets/cartoon-together.png" alt="根据双人合照绘制的卡通插画：长发戴口罩的女孩，和戴圆框眼镜的男孩靠在一起"><figcaption>这一张，留给我们。</figcaption><small>SIJIA · 27 / A MOMENT TO KEEP</small></figure></div><div class="polaroid-actions"><button id="polaroid-again" class="toy-action">再拍一张</button><a href="./assets/cartoon-together.png" download="留给我们的卡通合照.png">保存卡通合照</a></div></dialog>
+  <div id="camera-flash" aria-hidden="true"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <audio id="record-audio" preload="none" loop></audio>
+  <script src="config.js?v=a1e23c546e"></script><script type="module" src="room.js?v=11c522014c"></script>
+</body></html>
