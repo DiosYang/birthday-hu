@@ -72,7 +72,7 @@ export function createTravelJournal({stops,name,age,onOpen,onProgress}){
   $('travel-prev').onclick=()=>{if(active>0){active--;photo=0;render();}};
   $('travel-next').onclick=()=>{
     if(active<3){active++;furthest=Math.max(furthest,active);photo=0;save();render();}
-    else {finished=true;save();$('travel-finale-title').textContent=`思佳，27岁生日快乐。`;$('travel-finale').hidden=false;$('travel-finale').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});$('travel-next').textContent='重读给27岁的信';}
+    else {finished=true;save();$('travel-finale-title').textContent=`${name}，${age}岁生日快乐。`;$('travel-finale').hidden=false;$('travel-finale').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});$('travel-next').textContent='重读给27岁的信';}
   };
   $('travel-close').onclick=()=>modal.close();
   modal.addEventListener('click',e=>{if(e.target===modal){const r=modal.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)modal.close();}});

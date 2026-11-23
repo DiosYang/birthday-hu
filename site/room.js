@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createTravelJournal, paintWallMap } from './travel.js?v=fd6c5ef37c';
+import { createTravelJournal, paintWallMap } from './travel.js?v=3b8f47dffb';
 import { createNightSky } from './sky.js?v=94791930fa';
 import { createRoomExtras } from './extras.js?v=728b31639e';
 import { addReferencePlants } from './plants.js?v=c91b8e662a';
@@ -284,13 +284,14 @@ const referencePlants=addReferencePlants({THREE,scene,group,box,cyl,tube});
 // Shared interaction state. The object buttons also support keyboard visitors.
 const discovered=new Set();let giftOpened=false,candleOut=false;
 const dialog=$('letter');let modalAction=null;
-const travelJournal=createTravelJournal({stops:config.travel,name:config.name,age:config.age,onOpen:()=>{movement.clear();down=null;},onProgress:step=>{paintWallMap(mapCanvas,step);mapTexture.needsUpdate=true;}});
+const travelJournal=createTravelJournal({stops:config.travel,name:config.name,age:config.age,onOpen:()=>{movement.clear();down=null;releaseMouseLook();},onProgress:step=>{paintWallMap(mapCanvas,step);mapTexture.needsUpdate=true;}});
 const nightSky=createNightSky({name:config.name,age:config.age,onClose:()=>{windowTarget=0;windowOpening=false;movement.clear();document.querySelector('[data-item="window"]').focus();}});
 function modalOpen(){return dialog.open||travelJournal.isOpen||nightSky.isOpen||extras.isOpen||windowOpening;}
-function openWindow(){movement.clear();windowTarget=1;windowOpening=true;toast('窗外的星星，正在等你。');clearTimeout(windowTimer);windowTimer=setTimeout(()=>{windowOpening=false;nightSky.open();},reduced?0:1000);}
+function openWindow(){movement.clear();releaseMouseLook();windowTarget=1;windowOpening=true;toast('窗外的星星，正在等你。');clearTimeout(windowTimer);windowTimer=setTimeout(()=>{windowOpening=false;nightSky.open();},reduced?0:1000);}
 
 
 function showLetter(label,title,body,actionLabel,action){
+  releaseMouseLook();
   $('letter-label').textContent=label;$('letter-title').textContent=title;$('letter-body').textContent=body;
   $('letter-sign').textContent=`—— ${config.from}`;
   $('next').hidden=!actionLabel;$('next').textContent=actionLabel||'';modalAction=action;
@@ -304,8 +305,8 @@ function mark(id){discovered.add(id);document.querySelector(`[data-item="${id}"]
 function openBook(){showLetter('A LETTER FOR YOUR TWENTY-SEVEN',`写给${config.age}岁的${config.name}`,config.book[0]);}
 function activate(id){
   mark(id);
-  if(id==='tv'){movement.clear();extras.openTV();}
-  if(id==='camera'){movement.clear();extras.print();}
+  if(id==='tv'){movement.clear();releaseMouseLook();extras.openTV();}
+  if(id==='camera'){movement.clear();releaseMouseLook();extras.print();}
   if(id==='rabbit'){extras.catchRabbit();showLetter('A LITTLE WHITE RABBIT','抓到一只小白兔！','祝你今年能有只小兔子。','放它继续玩',()=>{dialog.close();extras.resumeRabbit();});}
   if(id==='window')openWindow();
   if(id==='map')travelJournal.open();
@@ -323,7 +324,7 @@ function activate(id){
 document.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>activate(b.dataset.item));
 const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const itemNames={tv:'小电视',camera:'宝丽莱 I-2',rabbit:'捉住小白兔',window:'推开窗户',map:'旅行地图',book:`${config.age}岁的信`,moon:'月亮来信',cat:'摸摸小猫',record:'留声机',flowers:'一枝冬樱',gift:'生日礼物'};
-let focusedItem=null,down;
+let focusedItem=null,down,mouseLookAt=null,releasingPointerLock=false;
 function castItem(x,y){
   pointer.set(x,y);ray.setFromCamera(pointer,camera);
   for(const h of ray.intersectObjects(scene.children,true)){
@@ -336,13 +337,25 @@ function castItem(x,y){
 }
 function hit(e){const r=host.getBoundingClientRect();return castItem((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);}
 function look(){walkCamera.rotation.set(pitch,yaw,0,'YXZ');}
+function turnView(dx,dy){yaw-=dx*.003;pitch=Math.max(-1.15,Math.min(1.1,pitch-dy*.003));look();}
+function releaseMouseLook(){
+  mouseLookAt=null;down=null;
+  if(renderer&&document.pointerLockElement===renderer.domElement){releasingPointerLock=true;document.exitPointerLock();}
+}
+function requestMouseLook(){
+  const canvas=renderer?.domElement;
+  if(!canvas?.requestPointerLock||!matchMedia('(hover: hover) and (pointer: fine)').matches)return;
+  // Entering the room supplies the browser gesture; hover look also works if locking is unavailable.
+  try{canvas.requestPointerLock()?.catch(()=>{});}catch{}
+}
 function setWalking(value){
   if(value&&!renderer){toast('当前浏览器无法进入 3D，可以用下方按钮打开祝福。');return;}
-  walking=value;movement.clear();down=null;document.body.classList.toggle('walking',value);
+  if(!value)releaseMouseLook();
+  walking=value;movement.clear();down=null;mouseLookAt=null;document.body.classList.toggle('walking',value);
   $('walk-ui').hidden=!value;interior.visible=value;
   if(controls)controls.enabled=!value;
   camera=value?walkCamera:overviewCamera;
-  if(value){walkCamera.position.set(.95,1.7,3.55);yaw=.18;pitch=-.13;look();$('exit-room').focus();}
+  if(value){walkCamera.position.set(.95,1.7,3.55);yaw=.18;pitch=-.13;look();$('exit-room').focus();requestMouseLook();}
   else $('enter-room').focus();
   resize();
 }
@@ -356,20 +369,34 @@ window.addEventListener('keydown',e=>{
   if(e.code==='Escape')setWalking(false);
 });
 window.addEventListener('keyup',e=>{if(keyMoves[e.code])movement.delete(keyMoves[e.code]);});
-window.addEventListener('blur',()=>{movement.clear();down=null;});
-document.addEventListener('visibilitychange',()=>{movement.clear();down=null;});
+window.addEventListener('blur',()=>{movement.clear();releaseMouseLook();});
+document.addEventListener('visibilitychange',()=>{movement.clear();releaseMouseLook();});
 document.querySelectorAll('[data-move]').forEach(button=>{
   button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture(e.pointerId);movement.add(button.dataset.move);});
   for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,()=>movement.delete(button.dataset.move));
 });
 if(renderer){
   const canvas=renderer.domElement;
-  canvas.addEventListener('pointerdown',e=>{if(down)return;down={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,time:performance.now(),drag:0};if(walking)canvas.setPointerCapture(e.pointerId);});
+  canvas.addEventListener('pointerdown',e=>{if(down||modalOpen())return;down={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY,time:performance.now(),drag:0};if(walking&&e.pointerType!=='mouse')canvas.setPointerCapture(e.pointerId);});
   canvas.addEventListener('pointermove',e=>{
-    if(walking&&down&&down.id===e.pointerId){const dx=e.clientX-down.lastX,dy=e.clientY-down.lastY;down.drag+=Math.abs(dx)+Math.abs(dy);yaw-=dx*.004;pitch=Math.max(-1.15,Math.min(1.1,pitch-dy*.004));down.lastX=e.clientX;down.lastY=e.clientY;look();}
-    else if(!down)canvas.style.cursor=hit(e)?'pointer':'grab';
+    if(walking){
+      canvas.style.cursor='crosshair';
+      if(modalOpen()||document.hidden){mouseLookAt=null;return;}
+      if(e.pointerType==='mouse'){
+        if(document.pointerLockElement===canvas)return;
+        if(mouseLookAt){const dx=e.clientX-mouseLookAt.x,dy=e.clientY-mouseLookAt.y;turnView(dx,dy);if(down)down.drag+=Math.abs(dx)+Math.abs(dy);}
+        mouseLookAt={x:e.clientX,y:e.clientY};
+      }else if(down&&down.id===e.pointerId){const dx=e.clientX-down.lastX,dy=e.clientY-down.lastY;down.drag+=Math.abs(dx)+Math.abs(dy);turnView(dx,dy);down.lastX=e.clientX;down.lastY=e.clientY;}
+    }else if(!down)canvas.style.cursor=hit(e)?'pointer':'grab';
   });
-  canvas.addEventListener('pointerup',e=>{if(down&&down.id===e.pointerId){if(down.drag<8&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<8&&performance.now()-down.time<700){const id=hit(e);if(id)activate(id);}down=null;}});
+  canvas.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&walking&&!modalOpen())mouseLookAt={x:e.clientX,y:e.clientY};});
+  canvas.addEventListener('pointerleave',()=>{mouseLookAt=null;});
+  document.addEventListener('mousemove',e=>{if(walking&&!modalOpen()&&!document.hidden&&document.pointerLockElement===canvas){turnView(e.movementX,e.movementY);if(down)down.drag+=Math.abs(e.movementX)+Math.abs(e.movementY);}});
+  document.addEventListener('pointerlockchange',()=>{
+    mouseLookAt=null;
+    if(document.pointerLockElement!==canvas){if(walking&&!releasingPointerLock&&!modalOpen())setWalking(false);releasingPointerLock=false;}
+  });
+  canvas.addEventListener('pointerup',e=>{if(down&&down.id===e.pointerId){if(!modalOpen()&&down.drag<8&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<8&&performance.now()-down.time<700){const id=document.pointerLockElement===canvas?focusedItem:hit(e);if(id)activate(id);}down=null;}});
   canvas.addEventListener('pointercancel',()=>{down=null;});
 }
 $('reset').onclick=()=>{overviewCamera.position.set(8.5,10.5,16);controls?.target.set(0,1.3,0);controls?.update();};
